@@ -18,8 +18,15 @@ endfunction
 
 function! s:execute_with_commit(commit, startline, endline)
     let s:remote = system("git config --get remote.origin.url")
-    if s:remote !~ '.*[github|gitlab].*'
-        return
+
+    let s:pathprefix = ''
+    if s:remote =~ '(github.com|gitlab.com)'
+        let s:pathprefix = '/blob/'
+    elseif s:remote =~ 'sr.ht'
+        let s:pathprefix = '/tree/'
+    else
+        echoerr "unknown hosting plaform"
+        let s:pathprefix = '/'
     endif
     let s:repo = ''
     if s:remote =~ '^git'
@@ -36,8 +43,8 @@ function! s:execute_with_commit(commit, startline, endline)
 
     let s:path_from_root = strpart(expand('%:p'), strlen(s:root))
 
-    " https://github.com/OWNER/REPO/blob/BRANCH/PATH/FROM/ROOT#LN-LM
-    let s:link = s:repo . "/blob/" . a:commit . "/" . s:path_from_root
+    " https://HOST/OWNER/REPO/blob/BRANCH/PATH/FROM/ROOT#LN-LM
+    let s:link = s:repo . s:pathprefix . a:commit . "/" . s:path_from_root
     if a:startline == a:endline
         let s:link = s:link . "#L" . a:startline
     else
